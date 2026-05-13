@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: client-id
+            client-secret: secret
+            scope:
+              - email
+              - profile
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+jwt:
+  secret: ${JWT_SECRET:change-this-to-a-very-long-secret-key-at-least-256-bits}
+  expiration: 1800000
+  refresh-expiration: 7200000
+
+app:
+  frontend-url: http://localhost:5173
+
+logging:
+  level:
+    com.example.app: DEBUG
+    org.mybatis: DEBUG
