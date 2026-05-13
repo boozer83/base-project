@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: local
+  application:
+    name: app
+
+server:
+  port: 8080

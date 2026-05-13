@@ -1,0 +1,25 @@
+# Gradle
+backend/.gradle/
+backend/build/
+backend/bin/
+
+# Secrets
+backend/src/main/resources/application-local.yml
+
+# Node
+frontend/node_modules/
+frontend/dist/
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
