@@ -5,6 +5,8 @@ import { ElMessage } from 'element-plus'
 import { noticeService } from '@/services/noticeService'
 import { useAuthStore } from '@/stores/useAuthStore'
 import type { NoticeListItem } from '@/types/notice'
+import { CommonButton, CommonTag, CommonTable, CommonPagination } from '@/components/common'
+import type { TableColumn } from '@/components/common'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -41,6 +43,14 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ko-KR')
 }
 
+const columns: TableColumn[] = [
+  { prop: 'isPinned', label: '',        width: 60,  align: 'center', slot: true },
+  { prop: 'title',    label: '제목',    minWidth: 300, slot: true },
+  { prop: 'authorName', label: '작성자', width: 120, align: 'center' },
+  { prop: 'viewCount',  label: '조회',  width: 80,  align: 'center' },
+  { prop: 'createdAt',  label: '날짜',  width: 120, align: 'center', slot: true },
+]
+
 onMounted(fetchList)
 </script>
 
@@ -48,41 +58,39 @@ onMounted(fetchList)
   <div class="notice-list-page">
     <div class="page-header">
       <h2 class="page-title">공지사항</h2>
-      <el-button
+      <CommonButton
         v-if="authStore.isAdmin"
         type="primary"
         @click="router.push('/community/notice/write')"
       >
         글쓰기
-      </el-button>
+      </CommonButton>
     </div>
 
-    <el-table
+    <CommonTable
       v-loading="loading"
-      :data="list"
+      :columns="columns"
+      :data="(list as Record<string, unknown>[])"
+      :default-page-size="pageSize"
       style="width: 100%"
-      @row-click="(row: NoticeListItem) => goDetail(row.id)"
       row-class-name="clickable-row"
+      @row-click="(row: Record<string, unknown>) => goDetail(row.id as number)"
     >
-      <el-table-column width="60" align="center">
-        <template #default="{ row }">
-          <el-tag v-if="row.isPinned" type="danger" size="small">공지</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="title" label="제목" min-width="300">
-        <template #default="{ row }">
-          <span :class="{ 'pinned-title': row.isPinned }">{{ row.title }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="authorName" label="작성자" width="120" align="center" />
-      <el-table-column label="조회" prop="viewCount" width="80" align="center" />
-      <el-table-column label="날짜" width="120" align="center">
-        <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-      </el-table-column>
-    </el-table>
+      <template #isPinned="{ row }">
+        <CommonTag v-if="(row as NoticeListItem).isPinned" type="danger" size="small">공지</CommonTag>
+      </template>
+      <template #title="{ row }">
+        <span :class="{ 'pinned-title': (row as NoticeListItem).isPinned }">
+          {{ (row as NoticeListItem).title }}
+        </span>
+      </template>
+      <template #createdAt="{ row }">
+        {{ formatDate((row as NoticeListItem).createdAt) }}
+      </template>
+    </CommonTable>
 
     <div class="pagination-wrap">
-      <el-pagination
+      <CommonPagination
         v-model:current-page="currentPage"
         :page-size="pageSize"
         :total="total"
@@ -94,39 +102,11 @@ onMounted(fetchList)
 </template>
 
 <style scoped>
-.notice-list-page {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 22px;
-}
-
-.pagination-wrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.pinned-title {
-  font-weight: 600;
-  color: #303133;
-}
-
-:deep(.clickable-row) {
-  cursor: pointer;
-}
-
-:deep(.clickable-row:hover td) {
-  background-color: #f5f7fa !important;
-}
+.notice-list-page { max-width: 900px; margin: 0 auto; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.page-title { margin: 0; font-size: 22px; }
+.pagination-wrap { display: flex; justify-content: center; margin-top: 20px; }
+.pinned-title { font-weight: 600; color: #303133; }
+:deep(.clickable-row) { cursor: pointer; }
+:deep(.clickable-row:hover td) { background-color: #f5f7fa !important; }
 </style>

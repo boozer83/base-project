@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { noticeService } from '@/services/noticeService'
 import type { NoticeRequest } from '@/types/notice'
+import { CommonForm, CommonFormItem, CommonInput, CommonCheckbox, CommonButton } from '@/components/common'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,14 +35,8 @@ async function fetchForEdit() {
 }
 
 async function handleSubmit() {
-  if (!form.value.title.trim()) {
-    ElMessage.warning('제목을 입력해주세요.')
-    return
-  }
-  if (!form.value.content.trim()) {
-    ElMessage.warning('내용을 입력해주세요.')
-    return
-  }
+  if (!form.value.title.trim()) { ElMessage.warning('제목을 입력해주세요.'); return }
+  if (!form.value.content.trim()) { ElMessage.warning('내용을 입력해주세요.'); return }
   submitting.value = true
   try {
     if (isEdit.value) {
@@ -68,55 +63,29 @@ onMounted(fetchForEdit)
   <div class="notice-write-page" v-loading="loading">
     <h2 class="page-title">{{ isEdit ? '공지사항 수정' : '공지사항 등록' }}</h2>
 
-    <el-form label-position="top" class="write-form">
-      <el-form-item label="제목">
-        <el-input v-model="form.title" placeholder="제목을 입력하세요" maxlength="200" show-word-limit />
-      </el-form-item>
-
-      <el-form-item label="내용">
-        <el-input
-          v-model="form.content"
-          type="textarea"
-          :rows="15"
-          placeholder="내용을 입력하세요"
-        />
-      </el-form-item>
-
-      <el-form-item>
-        <el-checkbox v-model="form.isPinned">공지로 고정</el-checkbox>
-      </el-form-item>
-
+    <CommonForm label-position="top" class="write-form">
+      <CommonFormItem label="제목">
+        <CommonInput v-model="form.title" placeholder="제목을 입력하세요" :maxlength="200" show-word-limit />
+      </CommonFormItem>
+      <CommonFormItem label="내용">
+        <CommonInput v-model="form.content" type="textarea" :rows="15" placeholder="내용을 입력하세요" />
+      </CommonFormItem>
+      <CommonFormItem>
+        <CommonCheckbox v-model="form.isPinned">공지로 고정</CommonCheckbox>
+      </CommonFormItem>
       <div class="form-actions">
-        <el-button @click="router.back()">취소</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+        <CommonButton @click="router.back()">취소</CommonButton>
+        <CommonButton type="primary" :loading="submitting" @click="handleSubmit">
           {{ isEdit ? '수정' : '등록' }}
-        </el-button>
+        </CommonButton>
       </div>
-    </el-form>
+    </CommonForm>
   </div>
 </template>
 
 <style scoped>
-.notice-write-page {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.page-title {
-  font-size: 22px;
-  margin-bottom: 24px;
-}
-
-.write-form {
-  background: #fff;
-  padding: 24px;
-  border-radius: 4px;
-  border: 1px solid #e4e7ed;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
+.notice-write-page { max-width: 900px; margin: 0 auto; }
+.page-title { font-size: 22px; margin-bottom: 24px; }
+.write-form { background: #fff; padding: 24px; border-radius: 4px; border: 1px solid #e4e7ed; }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; }
 </style>

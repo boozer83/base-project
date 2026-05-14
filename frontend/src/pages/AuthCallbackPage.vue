@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/useAuthStore'
 import { ElMessage } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { CommonIcon } from '@/components/common'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,29 +27,13 @@ onMounted(async () => {
 
 <template>
   <div class="callback-page">
-    <el-icon class="loading-icon"><Loading /></el-icon>
+    <CommonIcon class="loading-icon"><Loading /></CommonIcon>
     <p>로그인 처리 중...</p>
   </div>
 </template>
 
 <style scoped>
-.callback-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  gap: 16px;
-  color: #606266;
-}
-
-.loading-icon {
-  font-size: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+.callback-page { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: 16px; color: #606266; }
+.loading-icon { font-size: 40px; animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

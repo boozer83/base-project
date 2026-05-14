@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useRouter } from 'vue-router'
+import { Connection } from '@element-plus/icons-vue'
+import { CommonMenu, CommonSubMenu, CommonMenuItem, CommonButton, CommonAvatar, CommonIcon } from '@/components/common'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -17,34 +19,25 @@ async function handleLogout() {
       <router-link to="/" class="logo-link">커뮤니티</router-link>
     </div>
 
-    <el-menu
-      mode="horizontal"
-      :ellipsis="false"
-      class="header-nav"
-      router
-    >
-      <el-sub-menu index="community">
+    <CommonMenu mode="horizontal" :ellipsis="false" class="header-nav" router>
+      <CommonSubMenu index="community">
         <template #title>커뮤니티</template>
-        <el-menu-item index="/community/notice">공지사항</el-menu-item>
-      </el-sub-menu>
-      <el-menu-item index="/sample">샘플</el-menu-item>
-    </el-menu>
+        <CommonMenuItem index="/community/notice">공지사항</CommonMenuItem>
+      </CommonSubMenu>
+      <CommonMenuItem index="/sample">샘플</CommonMenuItem>
+    </CommonMenu>
 
     <div class="header-auth">
       <template v-if="authStore.isLoggedIn">
-        <el-avatar
-          v-if="authStore.user?.picture"
-          :src="authStore.user.picture"
-          :size="32"
-        />
+        <CommonAvatar v-if="authStore.user?.picture" :src="authStore.user.picture" :size="32" />
         <span class="user-name">{{ authStore.user?.name }}</span>
-        <el-button size="small" @click="handleLogout">로그아웃</el-button>
+        <CommonButton size="small" @click="handleLogout">로그아웃</CommonButton>
       </template>
       <template v-else>
-        <el-button type="primary" size="small" @click="authStore.loginWithGoogle">
-          <el-icon><Connection /></el-icon>
+        <CommonButton type="primary" size="small" @click="authStore.loginWithGoogle">
+          <template #icon><CommonIcon><Connection /></CommonIcon></template>
           Google 로그인
-        </el-button>
+        </CommonButton>
       </template>
     </div>
   </div>
@@ -58,32 +51,9 @@ async function handleLogout() {
   height: 60px;
   gap: 16px;
 }
-
-.header-logo {
-  flex-shrink: 0;
-}
-
-.logo-link {
-  font-size: 20px;
-  font-weight: 700;
-  color: #409eff;
-  text-decoration: none;
-}
-
-.header-nav {
-  flex: 1;
-  border-bottom: none;
-}
-
-.header-auth {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-size: 14px;
-  color: #303133;
-}
+.header-logo { flex-shrink: 0; }
+.logo-link { font-size: 20px; font-weight: 700; color: #409eff; text-decoration: none; }
+.header-nav { flex: 1; border-bottom: none; }
+.header-auth { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.user-name { font-size: 14px; color: #303133; }
 </style>
