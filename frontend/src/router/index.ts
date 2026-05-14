@@ -35,6 +35,11 @@ const routes: RouteRecordRaw[] = [
     name: 'notice-detail',
     component: () => import('@/pages/community/NoticeDetailPage.vue'),
   },
+  {
+    path: '/sample',
+    name: 'sample',
+    component: () => import('@/pages/sample/SamplePage.vue'),
+  },
 ]
 
 const router = createRouter({

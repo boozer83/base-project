@@ -27,6 +27,7 @@ async function handleLogout() {
         <template #title>커뮤니티</template>
         <el-menu-item index="/community/notice">공지사항</el-menu-item>
       </el-sub-menu>
+      <el-menu-item index="/sample">샘플</el-menu-item>
     </el-menu>
 
     <div class="header-auth">
