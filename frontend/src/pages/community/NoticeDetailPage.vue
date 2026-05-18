@@ -46,7 +46,7 @@ onMounted(fetchNotice)
 </script>
 
 <template>
-  <div class="notice-detail-page" v-loading="loading">
+  <div v-loading="loading" class="notice-detail-page">
     <template v-if="notice">
       <div class="detail-header">
         <CommonTag v-if="notice.isPinned" type="danger" class="pin-tag">공지</CommonTag>

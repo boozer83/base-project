@@ -60,7 +60,7 @@ onMounted(fetchForEdit)
 </script>
 
 <template>
-  <div class="notice-write-page" v-loading="loading">
+  <div v-loading="loading" class="notice-write-page">
     <h2 class="page-title">{{ isEdit ? '공지사항 수정' : '공지사항 등록' }}</h2>
 
     <CommonForm label-position="top" class="write-form">
