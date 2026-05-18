@@ -1,0 +1,19 @@
+# Gradle
+.gradle/
+build/
+bin/
+
+# Secrets
+src/main/resources/application-local.yml
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

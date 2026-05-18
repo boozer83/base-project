@@ -32,7 +32,7 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx,vue}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^props$' }],
       'vue/multi-word-component-names': 'off',
     },
   },
