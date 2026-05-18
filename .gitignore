@@ -14,6 +14,7 @@ package-lock.json
 
 # IDE
 .vscode/
+!frontend/.vscode/
 .idea/
 *.iml
 
