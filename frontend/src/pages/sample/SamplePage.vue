@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage, ElNotification } from 'element-plus'
+import { ElMessage, ElNotification, ElTableV2 } from 'element-plus'
+import type { Column } from 'element-plus'
+import type { EChartsOption } from 'echarts'
 import { Edit, Delete, Download, Upload, Check, Warning, CircleCloseFilled, InfoFilled, Bell, Star, StarFilled } from '@element-plus/icons-vue'
 import {
   CommonCalendar, CommonCalendarRange,
@@ -15,6 +17,7 @@ import {
   CommonBadge, CommonAvatar, CommonAvatarGroup, CommonTimeline,
   CommonTable, CommonCardList, CommonTag,
   CommonForm, CommonFormItem, CommonPagination,
+  CommonChart,
 } from '@/components/common'
 import type { SelectOption, TableColumn, TimelineItem, TabItem } from '@/components/common'
 import { useSampleStore } from '@/stores/useSampleStore'
@@ -128,6 +131,54 @@ const demoPageData = computed(() => {
   const start = (demoCurrentPage.value - 1) * demoPageSize.value
   return demoItems.slice(start, start + demoPageSize.value)
 })
+
+// 가상 스크롤
+const virtualData = Array.from({ length: 10000 }, (_, i) => ({
+  id: i + 1,
+  name: `사용자 ${String(i + 1).padStart(5, '0')}`,
+  score: Math.floor(Math.random() * 100),
+  status: ['활성', '비활성', '대기'][i % 3],
+}))
+const virtualColumns: Column[] = [
+  { key: 'id',     dataKey: 'id',     title: '#',   width: 80,  align: 'center' },
+  { key: 'name',   dataKey: 'name',   title: '이름', width: 220 },
+  { key: 'score',  dataKey: 'score',  title: '점수', width: 100, align: 'right' },
+  { key: 'status', dataKey: 'status', title: '상태', width: 100, align: 'center' },
+]
+
+// 차트
+const barOption: EChartsOption = {
+  tooltip: { trigger: 'axis' },
+  xAxis: { type: 'category', data: ['1월', '2월', '3월', '4월', '5월', '6월'] },
+  yAxis: { type: 'value' },
+  series: [{ name: '방문자', type: 'bar', data: [120, 200, 150, 80, 70, 110], color: '#409eff' }],
+}
+const lineOption: EChartsOption = {
+  tooltip: { trigger: 'axis' },
+  legend: { data: ['매출', '비용'] },
+  xAxis: { type: 'category', data: ['1월', '2월', '3월', '4월', '5월', '6월'] },
+  yAxis: { type: 'value' },
+  series: [
+    { name: '매출', type: 'line', smooth: true, data: [820, 932, 901, 934, 1290, 1330] },
+    { name: '비용', type: 'line', smooth: true, data: [430, 520, 480, 600, 720, 650] },
+  ],
+}
+const pieOption: EChartsOption = {
+  tooltip: { trigger: 'item' },
+  legend: { orient: 'vertical', left: 'left' },
+  series: [{
+    name: '기술 스택',
+    type: 'pie',
+    radius: '60%',
+    data: [
+      { value: 1048, name: 'Vue.js' },
+      { value: 735,  name: 'React' },
+      { value: 580,  name: 'Angular' },
+      { value: 484,  name: 'Svelte' },
+      { value: 300,  name: '기타' },
+    ],
+  }],
+}
 
 // 메시지 / 알림
 function showMessage(type: 'success' | 'warning' | 'error' | 'info') {
@@ -451,7 +502,39 @@ function showNotification(type: 'success' | 'warning' | 'error' | 'info') {
         </div>
       </div>
     </section>
-    <!-- ── 15. 페이지네이션 ── -->
+    <!-- ── 15. 가상 스크롤 ── -->
+    <section class="section">
+      <h3 class="section-title">가상 스크롤 (ElTableV2) — 10,000건</h3>
+      <p class="hint" style="margin-bottom: 12px">DOM에 보이는 행만 렌더링 · 대용량 데이터도 부드럽게 스크롤</p>
+      <ElTableV2
+        :columns="virtualColumns"
+        :data="virtualData"
+        :width="560"
+        :height="400"
+        fixed
+      />
+    </section>
+
+    <!-- ── 16. 차트 ── -->
+    <section class="section">
+      <h3 class="section-title">차트 (CommonChart / ECharts)</h3>
+      <div class="chart-grid">
+        <div>
+          <p class="label">막대 차트</p>
+          <CommonChart :option="barOption" height="260px" />
+        </div>
+        <div>
+          <p class="label">선형 차트</p>
+          <CommonChart :option="lineOption" height="260px" />
+        </div>
+        <div>
+          <p class="label">원형 차트</p>
+          <CommonChart :option="pieOption" height="260px" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 18. 페이지네이션 ── -->
     <section class="section">
       <h3 class="section-title">페이지네이션 (CommonPagination)</h3>
 
@@ -544,6 +627,9 @@ function showNotification(type: 'success' | 'warning' | 'error' | 'info') {
 .card-title  { font-size: 15px; font-weight: 600; margin: 0 0 8px; color: #303133; }
 .card-desc   { font-size: 13px; color: #606266; line-height: 1.6; margin: 0 0 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .card-footer { display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+
+.chart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+@media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
 
 .pagi-group { display: flex; flex-direction: column; gap: 4px; }
 

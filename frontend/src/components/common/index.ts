@@ -17,6 +17,7 @@ export { default as CommonButton }           from './CommonButton.vue'
 export { default as CommonDialog }           from './CommonDialog.vue'
 
 // 데이터 표시
+export { default as CommonChart }            from './CommonChart.vue'
 export { default as CommonTable }            from './CommonTable.vue'
 export { default as CommonCardList }         from './CommonCardList.vue'
 export { default as CommonProgress }         from './CommonProgress.vue'
