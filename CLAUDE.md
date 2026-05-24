@@ -66,6 +66,26 @@ psql -U postgresql -d lotto -f backend/src/main/resources/schema.sql
 ### 백엔드 레이어
 Controller → Service → Mapper (MyBatis XML) 순서. 컨트롤러에 비즈니스 로직 없음.
 
+## One Punch Run (Flutter 게임)
+
+`one_punch/` 폴더에 위치한 Flutter 모바일 게임 프로젝트.
+
+**기획서**: https://www.notion.so/36587ce9f21a80a093edcdca34f0e419
+
+### 주요 구조
+- `lib/game/` — Flame 엔진 게임 로직
+- `lib/screens/` — 로비, 게임, 결과, 상점 등 화면
+- `lib/models/` — 데이터 모델 (PlayerData, GameResult 등)
+- `assets/audio/` — 사운드 파일 (WAV)
+
+### 실행 명령 (`one_punch/`)
+```bash
+flutter pub get
+flutter run
+```
+
+---
+
 ## Key Files
 
 | 파일 | 역할 |

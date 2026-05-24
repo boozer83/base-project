@@ -20,20 +20,26 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   bool _showReviveDialog = false;
   GameResult? _pendingResult;
 
+  // 게임 위젯 재생성을 강제하기 위한 키
+  Key _gameKey = UniqueKey();
+
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    _initGame();
+    _buildGame();
   }
 
-  void _initGame() {
+  void _buildGame() {
     final player = ref.read(playerProvider);
     _game = OnePunchGame(
       playerData: player,
       onGameOver: _handleGameOver,
       onReviveRequested: _handleReviveRequested,
     );
+    _gameKey = UniqueKey();
+    _showReviveDialog = false;
+    _pendingResult = null;
   }
 
   void _handleGameOver(GameResult result) {
@@ -47,7 +53,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _handleReviveRequested() {}
 
   Future<void> _onRevive() async {
-    // 광고 시청 후 부활 (현재는 즉시 부활)
     final player = ref.read(playerProvider);
     if (!player.canWatchAd) {
       _goToResult();
@@ -55,8 +60,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
     setState(() => _showReviveDialog = false);
     _game?.revive();
-    // 실제 앱에서는 여기서 광고 표시
-    ref.read(playerProvider.notifier).addStamina(0); // 광고 카운트 증가용 트리거
+    ref.read(playerProvider.notifier).addStamina(0);
   }
 
   void _goToResult() {
@@ -72,10 +76,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => ResultScreen(result: result),
-      ),
+      MaterialPageRoute(builder: (_) => ResultScreen(result: result)),
     );
+  }
+
+  // 결과 화면 대신 바로 재시작 (스태미나 1 추가 소모)
+  Future<void> _restartGame() async {
+    final used = await ref.read(playerProvider.notifier).useStamina();
+    if (!used) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('⚡ 스태미나가 부족해요!')),
+      );
+      _goToResult();
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _buildGame());
   }
 
   @override
@@ -93,6 +110,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           // ── Flame 게임 캔버스 ────────────────────
           if (_game != null)
             GameWidget(
+              key: _gameKey,
               game: _game!,
               overlayBuilderMap: {
                 'pause': (context, game) => _PauseOverlay(
@@ -105,11 +123,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               },
             ),
 
-          // ── 부활 다이얼로그 ──────────────────────
+          // ── 부활/재시작 다이얼로그 ────────────────
           if (_showReviveDialog && _pendingResult != null)
             _ReviveDialog(
               stage: _pendingResult!.stage,
               onRevive: _onRevive,
+              onRestart: _restartGame,
               onGiveUp: _goToResult,
             ),
         ],
@@ -124,21 +143,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 class _ReviveDialog extends StatelessWidget {
   final int stage;
   final VoidCallback onRevive;
+  final VoidCallback onRestart;
   final VoidCallback onGiveUp;
 
   const _ReviveDialog({
     required this.stage,
     required this.onRevive,
+    required this.onRestart,
     required this.onGiveUp,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.75),
+      color: Colors.black.withOpacity(0.8),
       child: Center(
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 32),
+          margin: const EdgeInsets.symmetric(horizontal: 40),
+          constraints: const BoxConstraints(maxWidth: 340),
           decoration: BoxDecoration(
             color: AppColors.backgroundAlt,
             borderRadius: BorderRadius.circular(20),
@@ -151,48 +173,61 @@ class _ReviveDialog extends StatelessWidget {
               ),
             ],
           ),
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('💀', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 12),
+              const Text('💀', style: TextStyle(fontSize: 44)),
+              const SizedBox(height: 10),
               const Text(
                 'GAME OVER',
                 style: TextStyle(
                   color: AppColors.primary,
-                  fontSize: 26,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 3,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'Stage $stage 도달',
-                style: const TextStyle(color: AppColors.textLight, fontSize: 16),
+                style: const TextStyle(color: AppColors.textLight, fontSize: 15),
               ),
-              const SizedBox(height: 24),
-              // 광고 부활 버튼
+              const SizedBox(height: 20),
+              // 광고 부활
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: onRevive,
-                  icon: const Text('📺', style: TextStyle(fontSize: 20)),
-                  label: const Text(
-                    '광고 보고 부활!',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  icon: const Text('📺', style: TextStyle(fontSize: 18)),
+                  label: const Text('광고 보고 부활!',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.gold,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+              // 다시 시작 (스태미나 소모)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onRestart,
+                  icon: const Text('🔄', style: TextStyle(fontSize: 18)),
+                  label: const Text('다시 시작 (⚡1)',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentLight,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -200,10 +235,8 @@ class _ReviveDialog extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textDim,
                     side: const BorderSide(color: AppColors.textDim),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('결과 확인'),
                 ),
@@ -228,7 +261,7 @@ class _PauseOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.6),
+      color: Colors.black.withOpacity(0.65),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -236,30 +269,29 @@ class _PauseOverlay extends StatelessWidget {
             const Text(
               'PAUSED',
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 4,
-              ),
+                  color: Colors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 4),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
             ElevatedButton(
               onPressed: onResume,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
               ),
-              child: const Text('계속하기', style: TextStyle(fontSize: 18)),
+              child: const Text('계속하기', style: TextStyle(fontSize: 17)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             OutlinedButton(
               onPressed: onQuit,
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: const BorderSide(color: Colors.white54),
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
               ),
-              child: const Text('나가기', style: TextStyle(fontSize: 18)),
+              child: const Text('나가기', style: TextStyle(fontSize: 17)),
             ),
           ],
         ),

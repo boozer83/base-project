@@ -29,26 +29,17 @@ class HudComponent extends Component with HasGameRef {
   void render(Canvas canvas) {
     final size = gameRef.size;
 
-    // ── 상단 HUD 바 ───────────────────────────────
     _drawTopHudBg(canvas, size);
-
-    // ── 하트 (좌측) ───────────────────────────────
     _drawHearts(canvas, size);
-
-    // ── 스테이지 (중앙) ───────────────────────────
     _drawStage(canvas, size);
-
-    // ── 코인 (우측) ───────────────────────────────
     _drawCoins(canvas, size);
-
-    // ── 일시정지 버튼 (우상단) ─────────────────────
     _drawPauseButton(canvas, size);
 
-    // ── 콤보 (화면 우측 중간) ─────────────────────
     if (game.currentCombo >= 2) _drawCombo(canvas, size);
-
-    // ── 판정 텍스트 (중앙) ────────────────────────
     if (game.judgeDisplayTimer > 0) _drawJudgeText(canvas, size);
+
+    // 벽 접근 시 화면 가장자리 펄스 (타이밍 바 대체)
+    _drawProximityAlert(canvas, size);
   }
 
   void _drawTopHudBg(Canvas canvas, Vector2 size) {
@@ -56,12 +47,9 @@ class HudComponent extends Component with HasGameRef {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          Colors.black.withOpacity(0.85),
-          Colors.black.withOpacity(0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.x, 56));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.x, 56), paint);
+        colors: [Colors.black.withOpacity(0.85), Colors.black.withOpacity(0.0)],
+      ).createShader(Rect.fromLTWH(0, 0, size.x, 52));
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.x, 52), paint);
   }
 
   void _drawHearts(Canvas canvas, Vector2 size) {
@@ -95,29 +83,21 @@ class HudComponent extends Component with HasGameRef {
       center.dx + s * 1.2, center.dy - s * 0.2,
       center.dx, center.dy + s * 0.8,
     );
-
     if (glow) {
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = color.withOpacity(0.4)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-      );
+      canvas.drawPath(path, Paint()
+        ..color = color.withOpacity(0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
     }
     canvas.drawPath(path, Paint()..color = color);
   }
 
   void _drawStage(Canvas canvas, Vector2 size) {
-    // 스테이지 배경 패널
-    final panelPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5)
-      ..style = PaintingStyle.fill;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset(size.x / 2, 20), width: 110, height: 32),
         const Radius.circular(8),
       ),
-      panelPaint,
+      Paint()..color = Colors.black.withOpacity(0.5),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -129,29 +109,18 @@ class HudComponent extends Component with HasGameRef {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1,
     );
-
     final tp = TextPainter(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: 'STAGE ',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.white.withOpacity(0.7),
-              fontWeight: FontWeight.w500,
-              letterSpacing: 1.5,
-            ),
-          ),
-          TextSpan(
-            text: '${game.currentStage}',
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+      text: TextSpan(children: [
+        TextSpan(
+          text: 'STAGE ',
+          style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.7),
+              fontWeight: FontWeight.w500, letterSpacing: 1.5),
+        ),
+        TextSpan(
+          text: '${game.currentStage}',
+          style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ]),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, Offset(size.x / 2 - tp.width / 2, 10));
@@ -161,12 +130,8 @@ class HudComponent extends Component with HasGameRef {
     final tp = TextPainter(
       text: TextSpan(
         text: '⭐ ${game.coinsEarned}',
-        style: const TextStyle(
-          fontSize: 13,
-          color: AppColors.gold,
-          fontWeight: FontWeight.bold,
-          shadows: [Shadow(color: AppColors.gold, blurRadius: 6)],
-        ),
+        style: const TextStyle(fontSize: 13, color: AppColors.gold,
+            fontWeight: FontWeight.bold, shadows: [Shadow(color: AppColors.gold, blurRadius: 6)]),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -178,41 +143,24 @@ class HudComponent extends Component with HasGameRef {
     final btnX = size.x - btnSize - 12;
     const btnY = 10.0;
 
-    // 버튼 배경
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(btnX, btnY, btnSize, btnSize),
-        const Radius.circular(7),
-      ),
+        Rect.fromLTWH(btnX, btnY, btnSize, btnSize), const Radius.circular(7)),
       Paint()..color = Colors.white.withOpacity(0.15),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(btnX, btnY, btnSize, btnSize),
-        const Radius.circular(7),
-      ),
+        Rect.fromLTWH(btnX, btnY, btnSize, btnSize), const Radius.circular(7)),
       Paint()
         ..color = Colors.white.withOpacity(0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1,
     );
-
-    // 일시정지 아이콘
     final barP = Paint()..color = Colors.white.withOpacity(0.9);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(btnX + 7, btnY + 7, 4, 14),
-        const Radius.circular(2),
-      ),
-      barP,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(btnX + 15, btnY + 7, 4, 14),
-        const Radius.circular(2),
-      ),
-      barP,
-    );
+    canvas.drawRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(btnX + 7, btnY + 7, 4, 14), const Radius.circular(2)), barP);
+    canvas.drawRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(btnX + 15, btnY + 7, 4, 14), const Radius.circular(2)), barP);
   }
 
   void _drawCombo(Canvas canvas, Vector2 size) {
@@ -227,41 +175,27 @@ class HudComponent extends Component with HasGameRef {
 
     canvas.save();
     final cx = size.x * 0.88;
-    final cy = size.y * 0.42;
+    final cy = size.y * 0.38;
     canvas.translate(cx, cy);
     canvas.scale(scale, scale);
 
-    // 콤보 배경
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-35, -30, 70, 60),
-        const Radius.circular(10),
-      ),
+      RRect.fromRectAndRadius(const Rect.fromLTWH(-35, -30, 70, 60), const Radius.circular(10)),
       Paint()..color = Colors.black.withOpacity(0.55),
     );
 
     final tp = TextPainter(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: '${game.currentCombo}',
-            style: TextStyle(
-              fontSize: 34,
-              color: comboColor,
-              fontWeight: FontWeight.bold,
-              shadows: [Shadow(color: comboColor.withOpacity(0.7), blurRadius: 10)],
-            ),
-          ),
-          TextSpan(
-            text: '\nCOMBO',
-            style: TextStyle(
-              fontSize: 10,
-              color: comboColor.withOpacity(0.8),
-              letterSpacing: 2,
-            ),
-          ),
-        ],
-      ),
+      text: TextSpan(children: [
+        TextSpan(
+          text: '${game.currentCombo}',
+          style: TextStyle(fontSize: 34, color: comboColor, fontWeight: FontWeight.bold,
+              shadows: [Shadow(color: comboColor.withOpacity(0.7), blurRadius: 10)]),
+        ),
+        TextSpan(
+          text: '\nCOMBO',
+          style: TextStyle(fontSize: 10, color: comboColor.withOpacity(0.8), letterSpacing: 2),
+        ),
+      ]),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     )..layout();
@@ -319,10 +253,57 @@ class HudComponent extends Component with HasGameRef {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
+    tp.paint(canvas, Offset(size.x / 2 - tp.width / 2, size.y * 0.35 + yOffset));
+  }
 
-    tp.paint(
-      canvas,
-      Offset(size.x / 2 - tp.width / 2, size.y * 0.38 + yOffset),
+  // 벽 근접 시 화면 가장자리를 붉게 펄스 (타이밍 힌트)
+  void _drawProximityAlert(Canvas canvas, Vector2 size) {
+    final dist = game.distanceToWall;
+    if (dist == null) return;
+
+    const perfectDist = 45.0;
+    const greatDist = 110.0;
+    const goodDist = 190.0;
+
+    Color alertColor;
+    double intensity;
+
+    if (dist <= perfectDist) {
+      alertColor = AppColors.perfect;
+      intensity = 0.55 + sin(_elapsed * 20) * 0.2;
+    } else if (dist <= greatDist) {
+      alertColor = AppColors.great;
+      intensity = 0.35 + sin(_elapsed * 14) * 0.15;
+    } else if (dist <= goodDist) {
+      alertColor = AppColors.good;
+      intensity = 0.15 + sin(_elapsed * 8) * 0.1;
+    } else {
+      return;
+    }
+
+    // TAP 텍스트
+    final tapOpacity = (intensity * 1.4).clamp(0.0, 1.0);
+    final tapTp = TextPainter(
+      text: TextSpan(
+        text: 'TAP!',
+        style: TextStyle(
+          fontSize: 20 + (1 - dist / goodDist) * 8,
+          color: alertColor.withOpacity(tapOpacity),
+          fontWeight: FontWeight.bold,
+          letterSpacing: 3,
+          shadows: [Shadow(color: alertColor.withOpacity(tapOpacity * 0.6), blurRadius: 12)],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tapTp.paint(canvas, Offset(size.x / 2 - tapTp.width / 2, size.y * 0.78));
+
+    // 좌측 테두리 강조 (캐릭터 쪽)
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, 6, size.y),
+      Paint()
+        ..color = alertColor.withOpacity(intensity * 0.8)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
   }
 

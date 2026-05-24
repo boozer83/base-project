@@ -12,6 +12,8 @@ export interface TableColumn {
   type?: 'index'
 }
 
+defineOptions({ inheritAttrs: false })
+
 const props = defineProps<{
   columns: TableColumn[]
   data: Record<string, unknown>[]
@@ -55,7 +57,7 @@ const pagedData = computed(() => {
       <slot name="toolbar-right" />
     </div>
 
-    <el-table :data="pagedData" stripe border style="width: 100%; margin-top: 12px">
+    <el-table v-bind="$attrs" :data="pagedData" stripe border style="width: 100%; margin-top: 12px">
       <template v-for="col in columns" :key="col.prop">
         <el-table-column
           v-if="col.type === 'index'"

@@ -20,7 +20,7 @@ class AudioManager {
       'great'     : 'assets/audio/great.wav',
       'good'      : 'assets/audio/good.wav',
       'miss'      : 'assets/audio/miss.wav',
-      'wall_break': 'assets/audio/wall_break.wav',
+      'wall_break': 'assets/audio/wall_break.mp3',
       'combo'     : 'assets/audio/combo.wav',
       'game_start': 'assets/audio/game_start.wav',
     };

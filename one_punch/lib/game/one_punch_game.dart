@@ -10,7 +10,6 @@ import 'components/wall_component.dart';
 import 'components/background_component.dart';
 import 'components/ground_component.dart';
 import 'components/particle_component.dart';
-import 'components/timing_bar_component.dart';
 import 'components/hud_component.dart';
 import 'components/screen_effect_component.dart';
 
@@ -18,12 +17,10 @@ enum GameState { waiting, running, wallApproaching, judging, gameOver, paused }
 enum JudgeResult { perfect, great, good, miss, none }
 
 class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
-  // ── 외부에서 주입되는 플레이어 데이터 ──────────────
   final PlayerData playerData;
   final void Function(GameResult) onGameOver;
   final void Function() onReviveRequested;
 
-  // ── 게임 상태 ───────────────────────────────────
   GameState gameState = GameState.running;
   int currentStage = 1;
   int currentHearts = 3;
@@ -37,11 +34,8 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   int coinsEarned = 0;
   bool _revived = false;
 
-  // ── 현재 벽 ────────────────────────────────────
   WallComponent? _currentWall;
-  TimingBarComponent? _timingBar;
 
-  // ── 컴포넌트 참조 ─────────────────────────────────
   late RunnerComponent _runner;
   // ignore: unused_field
   late HudComponent _hud;
@@ -49,13 +43,14 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late BackgroundComponent _background;
   late ScreenEffectComponent _screenEffect;
 
-  // ── 판정 표시 타이머 ──────────────────────────────
   JudgeResult _lastJudge = JudgeResult.none;
   double _judgeDisplayTimer = 0;
 
-  // ── 벽 스케줄 ─────────────────────────────────────
   double _wallSpawnTimer = 0;
-  double _wallSpawnInterval = 2.5; // 초기 2.5초 (느리게 시작)
+  double _wallSpawnInterval = 2.5;
+
+  // 터치 잠금: 한 벽당 한 번만 판정
+  bool _touched = false;
 
   OnePunchGame({
     required this.playerData,
@@ -68,33 +63,24 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
   @override
   Future<void> onLoad() async {
-    super.onLoad();
-
-    // 오디오 초기화
+    await super.onLoad();
     await AudioManager().init();
     AudioManager().play('game_start');
 
     currentHearts = playerData.maxHearts;
     maxHearts = playerData.maxHearts;
 
-    // 배경
     _background = BackgroundComponent();
     await add(_background);
 
-    // 지면
     await add(GroundComponent());
 
-    // 캐릭터
-    _runner = RunnerComponent(
-      characterIndex: playerData.selectedCharacterIndex,
-    );
+    _runner = RunnerComponent(characterIndex: playerData.selectedCharacterIndex);
     await add(_runner);
 
-    // HUD
     _hud = HudComponent(game: this);
     await add(_hud);
 
-    // 스크린 이펙트 (최상위)
     _screenEffect = ScreenEffectComponent();
     await add(_screenEffect);
   }
@@ -104,17 +90,14 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     super.update(dt);
 
     if (gameState == GameState.paused || gameState == GameState.gameOver) return;
-
-    // 히트스탑 중엔 게임 로직 일시 정지
     if (_screenEffect.isHitstop) return;
 
-    // 판정 표시 타이머
     if (_judgeDisplayTimer > 0) {
       _judgeDisplayTimer -= dt;
       if (_judgeDisplayTimer <= 0) _lastJudge = JudgeResult.none;
     }
 
-    // 벽 스폰 스케줄링
+    // 벽 스폰
     if (_currentWall == null && gameState == GameState.running) {
       _wallSpawnTimer += dt;
       if (_wallSpawnTimer >= _wallSpawnInterval) {
@@ -123,28 +106,20 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       }
     }
 
-    // 벽 접근 감지
+    // 벽 접근 감지: 캐릭터에 닿으면 자동 MISS
     if (_currentWall != null && gameState == GameState.wallApproaching) {
       final wallX = _currentWall!.position.x;
-      final runnerX = _runner.position.x + _runner.size.x;
+      final runnerRightX = _runner.position.x + _runner.size.x;
 
-      // 타이밍 바 등장: 벽이 화면 오른쪽 끝에서 나타나면
-      if (wallX < size.x * 0.75 && _timingBar == null) {
-        _showTimingBar();
-      }
-
-      // 벽이 캐릭터에 닿으면 → 자동 MISS 처리
-      if (wallX <= runnerX + 10) {
-        _processHit(JudgeResult.miss);
+      if (wallX <= runnerRightX + 5) {
+        if (!_touched) _processHit(JudgeResult.miss);
       }
     }
   }
 
-  // ── 벽 생성 ────────────────────────────────────
   void _spawnWall() {
     final wallData = WallConfig.forStage(currentStage);
     final hp = (wallData.baseHp * (1 + currentStage * 0.05)).toInt();
-    // 스테이지마다 속도 가속: 1스테이지 ~160, 50스테이지 ~560, 100스테이지 ~960
     final speed = wallData.baseSpeed + currentStage * 8.0;
 
     _currentWall = WallComponent(
@@ -155,24 +130,15 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     );
     add(_currentWall!);
     gameState = GameState.wallApproaching;
-
-    // 스테이지가 오를수록 스폰 간격 약간 감소
-    // 스테이지 오를수록 간격 감소: 1→2.5s, 25→1.5s, 50→1.0s, 100→0.6s
+    _touched = false;
     _wallSpawnInterval = (2.5 - currentStage * 0.03).clamp(0.6, 2.5);
   }
 
-  // ── 타이밍 바 표시 ──────────────────────────────
-  void _showTimingBar() {
-    _timingBar = TimingBarComponent(gameSize: size);
-    add(_timingBar!);
-  }
-
-  // ── 터치 처리 ────────────────────────────────────
   @override
   void onTapDown(TapDownEvent event) {
     final tapPos = event.canvasPosition;
 
-    // 일시정지 버튼 탭 체크 (우상단 영역)
+    // 일시정지 버튼 (우상단)
     final btnX = size.x - 46;
     const btnY = 14.0;
     const btnSize = 32.0;
@@ -187,26 +153,34 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       return;
     }
 
-    if (gameState == GameState.wallApproaching) {
-      _judgeTouch();
+    if (gameState == GameState.wallApproaching && !_touched) {
+      _touched = true;
+      _judgeByDistance();
     }
   }
 
-  void _judgeTouch() {
-    if (_timingBar == null || _currentWall == null) return;
+  // ── 거리 기반 판정 ──────────────────────────────────
+  void _judgeByDistance() {
+    if (_currentWall == null) return;
 
-    final offset = _timingBar!.currentOffset; // 0에 가까울수록 PERFECT
+    final wallLeftX = _currentWall!.position.x;
+    final characterRightX = _runner.position.x + _runner.size.x;
+    final distance = wallLeftX - characterRightX;
+
+    // spdBonus(0~0.29)를 픽셀로 변환해 판정 창 확장
+    final extra = playerData.spdBonus * 120;
+
     JudgeResult result;
-    final spdBonus = playerData.spdBonus;
-
-    if (offset.abs() <= GameConfig.perfectWindow + spdBonus) {
+    if (distance < -5) {
+      result = JudgeResult.miss; // 벽이 이미 지나침
+    } else if (distance <= 45 + extra) {
       result = JudgeResult.perfect;
-    } else if (offset.abs() <= GameConfig.greatWindow + spdBonus) {
+    } else if (distance <= 110 + extra) {
       result = JudgeResult.great;
-    } else if (offset.abs() <= GameConfig.goodWindow + spdBonus) {
+    } else if (distance <= 190 + extra) {
       result = JudgeResult.good;
     } else {
-      result = JudgeResult.miss;
+      result = JudgeResult.miss; // 너무 일찍
     }
 
     _processHit(result);
@@ -216,16 +190,11 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _lastJudge = result;
     _judgeDisplayTimer = 1.2;
 
-    // 타이밍 바 제거
-    _timingBar?.removeFromParent();
-    _timingBar = null;
-
     if (result == JudgeResult.miss) {
       _onMiss();
       return;
     }
 
-    // 데미지 계산
     double mult;
     switch (result) {
       case JudgeResult.perfect:
@@ -254,7 +223,6 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     final wallBroken = _currentWall!.takeDamage(damage);
 
-    // 판정 사운드 + 화면 이펙트
     switch (result) {
       case JudgeResult.perfect:
         AudioManager().play('perfect');
@@ -270,10 +238,7 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       default: break;
     }
 
-    // 파티클 이펙트
     _spawnParticle(result);
-
-    // 캐릭터 펀치 애니메이션
     _runner.punch(result);
 
     if (wallBroken) {
@@ -281,7 +246,6 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _screenEffect.onWallBreak();
       _onWallBroken();
     } else {
-      // 데미지 부족 → 즉시 게임오버
       _onWallNotBroken();
     }
   }
@@ -289,8 +253,6 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   void _addCombo() {
     currentCombo++;
     if (currentCombo > maxCombo) maxCombo = currentCombo;
-
-    // PERFECT 5연속이면 하트 회복
     if (currentCombo % 5 == 0 && _lastJudge == JudgeResult.perfect) {
       if (currentHearts < maxHearts) currentHearts++;
     }
@@ -315,9 +277,7 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _currentWall = null;
     gameState = GameState.running;
 
-    if (currentHearts <= 0) {
-      _triggerGameOver();
-    }
+    if (currentHearts <= 0) _triggerGameOver();
   }
 
   void _onWallBroken() {
@@ -329,7 +289,6 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   }
 
   void _onWallNotBroken() {
-    // 데미지 부족 → 즉시 게임오버
     _currentWall?.removeFromParent();
     _currentWall = null;
     _triggerGameOver();
@@ -359,7 +318,6 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     });
   }
 
-  // ── 부활 처리 ────────────────────────────────────
   void revive() {
     if (_revived) return;
     _revived = true;
@@ -368,7 +326,6 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _runner.revive();
   }
 
-  // ── 일시정지 ─────────────────────────────────────
   void togglePause() {
     if (gameState == GameState.running || gameState == GameState.wallApproaching) {
       gameState = GameState.paused;
@@ -379,11 +336,18 @@ class OnePunchGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     }
   }
 
-  // ── HUD에서 참조할 getter ─────────────────────────
+  // HUD에서 참조
   JudgeResult get lastJudge => _lastJudge;
   double get judgeDisplayTimer => _judgeDisplayTimer;
+
+  // 벽까지 남은 거리 (HUD 표시용)
+  double? get distanceToWall {
+    if (_currentWall == null) return null;
+    final d = _currentWall!.position.x - (_runner.position.x + _runner.size.x);
+    return d.clamp(0.0, double.infinity);
+  }
 }
 
 extension PlayerDataGameExt on PlayerData {
-  double get atkBonus => 0.0; // 추후 캐릭터별 보너스 적용
+  double get atkBonus => 0.0;
 }

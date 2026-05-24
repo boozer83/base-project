@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/game_result.dart';
 import '../utils/constants.dart';
+import 'game_screen.dart';
 import 'lobby_screen.dart';
 
 class ResultScreen extends ConsumerWidget {
@@ -33,24 +34,46 @@ class ResultScreen extends ConsumerWidget {
 
               const Spacer(),
 
-              // 버튼
+              // 버튼들
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LobbyScreen()),
+                    MaterialPageRoute(builder: (_) => const GameScreen()),
                     (route) => false,
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: AppColors.accentLight,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    '🔄 다시 하기',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LobbyScreen()),
+                    (route) => false,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textLight,
+                    side: const BorderSide(color: AppColors.textDim),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: const Text(
                     '로비로 돌아가기',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 15),
                   ),
                 ),
               ),

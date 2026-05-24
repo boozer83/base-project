@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useMenuStore } from '@/stores/useMenuStore'
 import AppHeader from '@/components/AppHeader.vue'
 import { CommonContainer, CommonHeader, CommonMain, CommonFooter } from '@/components/common'
 
 const authStore = useAuthStore()
+const menuStore = useMenuStore()
 
 onMounted(() => {
   authStore.fetchUser()
+  menuStore.fetchMenus()
 })
 </script>
 

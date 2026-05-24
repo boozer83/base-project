@@ -1,11 +1,18 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useMenuStore } from '@/stores/useMenuStore'
 import { useRouter } from 'vue-router'
 import { Connection } from '@element-plus/icons-vue'
 import { CommonMenu, CommonSubMenu, CommonMenuItem, CommonButton, CommonAvatar, CommonIcon } from '@/components/common'
 
 const authStore = useAuthStore()
+const menuStore = useMenuStore()
 const router = useRouter()
+
+watch(() => authStore.isLoggedIn, () => {
+  menuStore.fetchMenus()
+})
 
 async function handleLogout() {
   await authStore.logout()
@@ -20,11 +27,21 @@ async function handleLogout() {
     </div>
 
     <CommonMenu mode="horizontal" :ellipsis="false" class="header-nav" router>
-      <CommonSubMenu index="community">
-        <template #title>커뮤니티</template>
-        <CommonMenuItem index="/community/notice">공지사항</CommonMenuItem>
-      </CommonSubMenu>
-      <CommonMenuItem index="/sample">샘플</CommonMenuItem>
+      <template v-for="menu in menuStore.menus" :key="menu.id">
+        <CommonSubMenu v-if="menu.children.length > 0" :index="String(menu.id)">
+          <template #title>{{ menu.name }}</template>
+          <CommonMenuItem
+            v-for="child in menu.children"
+            :key="child.id"
+            :index="child.path || String(child.id)"
+          >
+            {{ child.name }}
+          </CommonMenuItem>
+        </CommonSubMenu>
+        <CommonMenuItem v-else :index="menu.path || String(menu.id)">
+          {{ menu.name }}
+        </CommonMenuItem>
+      </template>
     </CommonMenu>
 
     <div class="header-auth">
