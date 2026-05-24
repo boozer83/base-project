@@ -10,6 +10,7 @@ export interface TableColumn {
   align?: 'left' | 'center' | 'right'
   slot?: boolean
   type?: 'index'
+  sortable?: boolean | 'custom'
 }
 
 defineOptions({ inheritAttrs: false })
@@ -73,6 +74,7 @@ const pagedData = computed(() => {
           :width="col.width"
           :min-width="col.minWidth"
           :align="col.align ?? 'left'"
+          :sortable="col.sortable"
         >
           <template #default="{ row }">
             <slot :name="col.prop" :row="row" />
@@ -85,6 +87,7 @@ const pagedData = computed(() => {
           :width="col.width"
           :min-width="col.minWidth"
           :align="col.align ?? 'left'"
+          :sortable="col.sortable"
         />
       </template>
     </el-table>

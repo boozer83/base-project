@@ -21,8 +21,10 @@ public class NoticeController {
     @GetMapping
     public ApiResponse<Map<String, Object>> getList(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.ok(noticeService.getNoticeList(page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder) {
+        return ApiResponse.ok(noticeService.getNoticeList(page, size, sortBy, sortOrder));
     }
 
     @GetMapping("/{id}")

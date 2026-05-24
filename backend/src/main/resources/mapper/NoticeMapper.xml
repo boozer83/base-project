@@ -18,7 +18,16 @@
     <select id="findAll" resultMap="noticeResultMap">
         SELECT id, title, content, author_id, author_name, is_pinned, view_count, created_at, updated_at
         FROM notices
-        ORDER BY is_pinned DESC, created_at DESC
+        ORDER BY is_pinned DESC,
+        <choose>
+            <when test="sortBy == 'viewCount'">view_count</when>
+            <when test="sortBy == 'title'">title</when>
+            <otherwise>created_at</otherwise>
+        </choose>
+        <choose>
+            <when test="sortOrder == 'asc'">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>
         LIMIT #{limit} OFFSET #{offset}
     </select>
 

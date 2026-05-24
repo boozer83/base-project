@@ -1,5 +1,6 @@
 package com.example.app.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class NoticeDto {
         @NotBlank(message = "내용을 입력해주세요.")
         private String content;
 
+        @JsonProperty("isPinned")
         private boolean isPinned;
     }
 
@@ -28,6 +30,7 @@ public class NoticeDto {
         private String content;
         private Long authorId;
         private String authorName;
+        @JsonProperty("isPinned")
         private boolean isPinned;
         private int viewCount;
         private LocalDateTime createdAt;
@@ -40,6 +43,7 @@ public class NoticeDto {
         private Long id;
         private String title;
         private String authorName;
+        @JsonProperty("isPinned")
         private boolean isPinned;
         private int viewCount;
         private LocalDateTime createdAt;

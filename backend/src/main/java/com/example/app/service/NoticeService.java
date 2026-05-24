@@ -14,18 +14,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class NoticeService {
 
+    private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of("createdAt", "viewCount", "title");
+
     private final NoticeMapper noticeMapper;
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
-    public Map<String, Object> getNoticeList(int page, int size) {
+    public Map<String, Object> getNoticeList(int page, int size, String sortBy, String sortOrder) {
+        String safeSortBy = ALLOWED_SORT_COLUMNS.contains(sortBy) ? sortBy : "createdAt";
+        String safeSortOrder = "asc".equalsIgnoreCase(sortOrder) ? "asc" : "desc";
         int offset = (page - 1) * size;
-        List<Notice> notices = noticeMapper.findAll(offset, size);
+        List<Notice> notices = noticeMapper.findAll(offset, size, safeSortBy, safeSortOrder);
         long total = noticeMapper.count();
 
         List<NoticeDto.ListItem> list = notices.stream()

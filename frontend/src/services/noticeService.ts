@@ -8,8 +8,10 @@ interface ApiResponse<T> {
 }
 
 export const noticeService = {
-  getList(page = 1, size = 10) {
-    return http.get<ApiResponse<NoticeListResponse>>('/community/notices', { params: { page, size } })
+  getList(page = 1, size = 10, sortBy = 'createdAt', sortOrder = 'desc') {
+    return http.get<ApiResponse<NoticeListResponse>>('/community/notices', {
+      params: { page, size, sortBy, sortOrder },
+    })
   },
   getOne(id: number) {
     return http.get<ApiResponse<Notice>>(`/community/notices/${id}`)

@@ -16,11 +16,13 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const loading = ref(false)
+const sortBy = ref('createdAt')
+const sortOrder = ref<'asc' | 'desc'>('desc')
 
 async function fetchList() {
   loading.value = true
   try {
-    const res = await noticeService.getList(currentPage.value, pageSize.value)
+    const res = await noticeService.getList(currentPage.value, pageSize.value, sortBy.value, sortOrder.value)
     list.value = res.data.data.list
     total.value = res.data.data.total
   } catch {
@@ -35,6 +37,13 @@ function handlePageChange(page: number) {
   fetchList()
 }
 
+function handleSortChange({ prop, order }: { prop: string; order: string | null }) {
+  sortBy.value = prop || 'createdAt'
+  sortOrder.value = order === 'ascending' ? 'asc' : 'desc'
+  currentPage.value = 1
+  fetchList()
+}
+
 function goDetail(id: number) {
   router.push(`/community/notice/${id}`)
 }
@@ -44,11 +53,11 @@ function formatDate(dateStr: string) {
 }
 
 const columns: TableColumn[] = [
-  { prop: 'isPinned', label: '',        width: 60,  align: 'center', slot: true },
-  { prop: 'title',    label: '제목',    minWidth: 300, slot: true },
+  { prop: 'isPinned',   label: '',      width: 60,  align: 'center', slot: true },
+  { prop: 'title',      label: '제목',  minWidth: 300, slot: true, sortable: 'custom' },
   { prop: 'authorName', label: '작성자', width: 120, align: 'center' },
-  { prop: 'viewCount',  label: '조회',  width: 80,  align: 'center' },
-  { prop: 'createdAt',  label: '날짜',  width: 120, align: 'center', slot: true },
+  { prop: 'viewCount',  label: '조회',  width: 80,  align: 'center', sortable: 'custom' },
+  { prop: 'createdAt',  label: '날짜',  width: 120, align: 'center', slot: true, sortable: 'custom' },
 ]
 
 onMounted(fetchList)
@@ -75,6 +84,7 @@ onMounted(fetchList)
       style="width: 100%"
       row-class-name="clickable-row"
       @row-click="(row: Record<string, unknown>) => goDetail(row.id as number)"
+      @sort-change="handleSortChange"
     >
       <template #isPinned="{ row }">
         <CommonTag v-if="(row as NoticeListItem).isPinned" type="danger" size="small">공지</CommonTag>
