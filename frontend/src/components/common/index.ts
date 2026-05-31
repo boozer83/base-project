@@ -36,6 +36,7 @@ export { default as CommonCheckbox }         from './CommonCheckbox.vue'
 // 오버레이
 export { default as CommonTooltip }          from './CommonTooltip.vue'
 export { default as CommonPopover }          from './CommonPopover.vue'
+export { default as CommonLoading }          from './CommonLoading.vue'
 
 // 레이아웃
 export { default as CommonContainer }        from './CommonContainer.vue'

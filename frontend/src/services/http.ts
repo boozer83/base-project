@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useLoadingStore } from '@/stores/useLoadingStore'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -16,15 +17,21 @@ function processPending(token: string) {
 
 http.interceptors.request.use((config) => {
   const authStore = useAuthStore()
+  const loadingStore = useLoadingStore()
   if (authStore.token) {
     config.headers.Authorization = `Bearer ${authStore.token}`
   }
+  loadingStore.start()
   return config
 })
 
 http.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    useLoadingStore().done()
+    return response
+  },
   async (error) => {
+    useLoadingStore().done()
     const originalRequest = error.config
     const authStore = useAuthStore()
 

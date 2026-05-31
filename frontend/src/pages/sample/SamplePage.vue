@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage, ElNotification, ElTableV2 } from 'element-plus'
+import { ElMessage, ElNotification, ElTableV2, ElSkeleton, ElSkeletonItem } from 'element-plus'
 import type { Column } from 'element-plus'
 import type { EChartsOption } from 'echarts'
 import { Edit, Delete, Download, Upload, Check, Warning, CircleCloseFilled, InfoFilled, Bell, Star, StarFilled } from '@element-plus/icons-vue'
@@ -17,13 +17,33 @@ import {
   CommonBadge, CommonAvatar, CommonAvatarGroup, CommonTimeline,
   CommonTable, CommonCardList, CommonTag,
   CommonForm, CommonFormItem, CommonPagination,
-  CommonChart,
+  CommonChart, CommonLoading,
 } from '@/components/common'
 import type { SelectOption, TableColumn, TimelineItem, TabItem } from '@/components/common'
 import { useSampleStore } from '@/stores/useSampleStore'
+import { useLoadingStore } from '@/stores/useLoadingStore'
 import type { TableRow } from '@/stores/useSampleStore'
 
 const store = useSampleStore()
+const loadingStore = useLoadingStore()
+
+// 로딩
+const partialLoading = ref(false)
+const skeletonLoading = ref(true)
+
+function triggerGlobalLoading() {
+  loadingStore.start()
+  setTimeout(() => loadingStore.done(), 2000)
+}
+
+function triggerPartialLoading() {
+  partialLoading.value = true
+  setTimeout(() => { partialLoading.value = false }, 2000)
+}
+
+function toggleSkeleton() {
+  skeletonLoading.value = !skeletonLoading.value
+}
 
 // 달력
 const singleDate    = ref('')
@@ -534,6 +554,67 @@ function showNotification(type: 'success' | 'warning' | 'error' | 'info') {
       </div>
     </section>
 
+    <!-- ── 17. 로딩 ── -->
+    <section class="section">
+      <h3 class="section-title">로딩 (전체 / 부분 / 스켈레톤)</h3>
+      <div class="row" style="gap: 32px; align-items: flex-start; flex-wrap: wrap;">
+
+        <div class="col">
+          <p class="label">전체 화면 로딩</p>
+          <p class="hint" style="margin-bottom: 10px">2초간 전체 화면 오버레이를 표시합니다.</p>
+          <CommonButton type="primary" @click="triggerGlobalLoading">전체 로딩 실행</CommonButton>
+        </div>
+
+        <div class="col">
+          <p class="label">부분 로딩 (v-loading)</p>
+          <p class="hint" style="margin-bottom: 10px">특정 영역만 로딩 처리합니다.</p>
+          <CommonButton type="warning" @click="triggerPartialLoading">부분 로딩 실행</CommonButton>
+          <CommonLoading :loading="partialLoading" min-height="80px">
+            <div class="partial-loading-box">
+              <p>콘텐츠 영역입니다.</p>
+              <p>로딩 중일 때 이 영역이 가려집니다.</p>
+            </div>
+          </CommonLoading>
+        </div>
+
+        <div class="col">
+          <p class="label">스켈레톤 (ElSkeleton)</p>
+          <CommonButton size="small" @click="toggleSkeleton" style="margin-bottom: 10px">
+            {{ skeletonLoading ? '로딩 완료 처리' : '스켈레톤 다시 보기' }}
+          </CommonButton>
+          <ElSkeleton :loading="skeletonLoading" animated style="width: 260px">
+            <template #template>
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px">
+                <ElSkeletonItem variant="circle" style="width: 40px; height: 40px; flex-shrink: 0" />
+                <div style="flex: 1">
+                  <ElSkeletonItem variant="text" style="width: 70%; margin-bottom: 6px" />
+                  <ElSkeletonItem variant="text" style="width: 50%" />
+                </div>
+              </div>
+              <ElSkeletonItem variant="image" style="width: 100%; height: 100px; border-radius: 6px; margin-bottom: 8px" />
+              <ElSkeletonItem variant="text" style="width: 100%; margin-bottom: 6px" />
+              <ElSkeletonItem variant="text" style="width: 80%" />
+            </template>
+            <template #default>
+              <div class="skeleton-preview-card">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px">
+                  <CommonAvatar :size="40" style="background-color: #409eff; flex-shrink: 0">AB</CommonAvatar>
+                  <div>
+                    <div style="font-weight: 600; font-size: 14px">홍길동</div>
+                    <div style="font-size: 12px; color: #909399">2026-05-31</div>
+                  </div>
+                </div>
+                <div style="background: #f0f2f5; border-radius: 6px; height: 100px; margin-bottom: 8px; display:flex; align-items:center; justify-content:center; color:#c0c4cc; font-size:13px">이미지 영역</div>
+                <p style="font-size: 13px; color: #303133; margin: 0 0 4px">안녕하세요, 스켈레톤 예시입니다.</p>
+                <p style="font-size: 13px; color: #606266; margin: 0">로딩이 완료된 실제 콘텐츠입니다.</p>
+              </div>
+            </template>
+          </ElSkeleton>
+        </div>
+
+      </div>
+    </section>
+
     <!-- ── 18. 페이지네이션 ── -->
     <section class="section">
       <h3 class="section-title">페이지네이션 (CommonPagination)</h3>
@@ -638,4 +719,7 @@ function showNotification(type: 'success' | 'warning' | 'error' | 'info') {
 .demo-id   { width: 36px; color: #909399; font-size: 12px; }
 .demo-name { width: 80px; font-weight: 600; color: #303133; }
 .demo-desc { color: #606266; }
+
+.partial-loading-box { margin-top: 12px; padding: 20px; background: #f5f7fa; border-radius: 8px; border: 1px solid #e4e7ed; min-height: 80px; font-size: 13px; color: #606266; line-height: 1.8; }
+.skeleton-preview-card { width: 260px; padding: 14px; background: #fff; border: 1px solid #e4e7ed; border-radius: 8px; }
 </style>

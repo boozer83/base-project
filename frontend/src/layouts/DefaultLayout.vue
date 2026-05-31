@@ -19,18 +19,20 @@ onMounted(() => {
     <CommonHeader class="layout-header">
       <AppHeader />
     </CommonHeader>
-    <CommonMain class="layout-main">
-      <router-view />
-    </CommonMain>
-    <CommonFooter class="layout-footer">
-      <span>© 2026 커뮤니티. All rights reserved.</span>
-    </CommonFooter>
+    <div class="scroll-area">
+      <CommonMain class="layout-main">
+        <router-view />
+      </CommonMain>
+      <CommonFooter class="layout-footer">
+        <span>© 2026 커뮤니티. All rights reserved.</span>
+      </CommonFooter>
+    </div>
   </CommonContainer>
 </template>
 
 <style scoped>
 .layout {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -39,9 +41,15 @@ onMounted(() => {
   height: auto;
   background-color: #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 100;
+}
+.scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 .layout-main {
   flex: 1;
@@ -49,6 +57,7 @@ onMounted(() => {
   margin: 0 auto;
   width: 100%;
   padding: 24px 20px;
+  overflow: visible;
 }
 .layout-footer {
   text-align: center;
@@ -56,5 +65,6 @@ onMounted(() => {
   font-size: 14px;
   background-color: #f5f7fa;
   border-top: 1px solid #e4e7ed;
+  flex-shrink: 0;
 }
 </style>
