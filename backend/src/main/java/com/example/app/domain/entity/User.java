@@ -17,8 +17,6 @@ public class User {
     private String email;
     private String name;
     private String picture;
-    @Builder.Default
-    private String role = "USER";
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -38,9 +38,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/me").authenticated()
                 .requestMatchers("/api/v1/auth/refresh").permitAll()
                 .requestMatchers("/oauth2/**", "/login/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/community/notices").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/community/notices/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/community/notices/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/community/notices").hasAuthority("NOTICE_WRITE")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/community/notices/**").hasAuthority("NOTICE_WRITE")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/community/notices/**").hasAuthority("NOTICE_WRITE")
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2

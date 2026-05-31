@@ -21,7 +21,7 @@ public class MenuController {
 
     @GetMapping
     public ApiResponse<List<MenuDto.Response>> getMenus(@AuthenticationPrincipal UserPrincipal principal) {
-        String role = principal != null ? principal.getRole() : null;
-        return ApiResponse.ok(menuService.getMenus(role));
+        List<String> permissions = principal != null ? principal.getPermissions() : List.of();
+        return ApiResponse.ok(menuService.getMenus(permissions));
     }
 }

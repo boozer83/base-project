@@ -14,6 +14,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -33,7 +34,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String email = oAuth2User.getAttribute("email");
 
         User user = userService.findByEmail(email);
-        AuthService.TokenPair tokens = authService.generateTokens(user);
+        List<String> permissions = userService.getPermissions(user.getId());
+        AuthService.TokenPair tokens = authService.generateTokens(user.getId(), user.getEmail(), permissions);
 
         log.info("OAuth2 login success: {}", email);
         response.sendRedirect(frontendUrl + "/auth/callback?token=" + tokens.getAccessToken()

@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -28,11 +29,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtUtil.parseToken(token);
             Long userId = Long.parseLong(claims.getSubject());
             String email = claims.get("email", String.class);
-            String role = claims.get("role", String.class);
 
-            UserPrincipal principal = new UserPrincipal(userId, email, role);
+            @SuppressWarnings("unchecked")
+            List<String> permissions = claims.get("permissions", List.class);
+            List<String> safePermissions = permissions != null ? permissions : List.of();
+
+            UserPrincipal principal = new UserPrincipal(userId, email, safePermissions);
+            List<SimpleGrantedAuthority> authorities = safePermissions.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    principal, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                    principal, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
         filterChain.doFilter(request, response);

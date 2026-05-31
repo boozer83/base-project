@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User } from '@/types/auth'
+import type { Permission } from '@/constants/permissions'
+import { PERMISSIONS } from '@/constants/permissions'
 import http from '@/services/http'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -9,7 +11,11 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
 
   const isLoggedIn = computed(() => !!token.value)
-  const isAdmin = computed(() => user.value?.role === 'ADMIN')
+  const isAdmin = computed(() => hasPermission(PERMISSIONS.ADMIN_ACCESS))
+
+  function hasPermission(permission: Permission): boolean {
+    return user.value?.permissions?.includes(permission) ?? false
+  }
 
   function setTokens(accessToken: string, newRefreshToken: string) {
     token.value = accessToken
@@ -52,5 +58,17 @@ export const useAuthStore = defineStore('auth', () => {
     window.location.href = `${import.meta.env.VITE_BACKEND_URL}/oauth2/authorization/google`
   }
 
-  return { token, refreshToken, user, isLoggedIn, isAdmin, setTokens, clearSession, logout, fetchUser, loginWithGoogle }
+  return {
+    token,
+    refreshToken,
+    user,
+    isLoggedIn,
+    isAdmin,
+    hasPermission,
+    setTokens,
+    clearSession,
+    logout,
+    fetchUser,
+    loginWithGoogle,
+  }
 })

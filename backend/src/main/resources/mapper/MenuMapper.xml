@@ -9,18 +9,23 @@
         <result property="path" column="path"/>
         <result property="parentId" column="parent_id"/>
         <result property="sortOrder" column="sort_order"/>
-        <result property="roles" column="roles"/>
+        <result property="permission" column="permission"/>
         <result property="isActive" column="is_active"/>
     </resultMap>
 
-    <select id="findByRoles" resultMap="menuResultMap">
-        SELECT id, name, path, parent_id, sort_order, roles, is_active
+    <select id="findByPermissions" resultMap="menuResultMap">
+        SELECT id, name, path, parent_id, sort_order, permission, is_active
         FROM menus
         WHERE is_active = TRUE
-          AND roles IN
-        <foreach item="role" collection="roles" open="(" separator="," close=")">
-            #{role}
-        </foreach>
+          AND (
+              permission IS NULL
+              <if test="permissions != null and !permissions.isEmpty()">
+              OR permission IN
+              <foreach item="p" collection="permissions" open="(" separator="," close=")">
+                  #{p}
+              </foreach>
+              </if>
+          )
         ORDER BY COALESCE(parent_id, id), sort_order
     </select>
 

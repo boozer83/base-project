@@ -6,7 +6,6 @@ import com.example.app.mapper.MenuMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -18,20 +17,9 @@ public class MenuService {
 
     private final MenuMapper menuMapper;
 
-    public List<MenuDto.Response> getMenus(String role) {
-        List<Menu> menus = menuMapper.findByRoles(buildAllowedRoles(role));
+    public List<MenuDto.Response> getMenus(List<String> permissions) {
+        List<Menu> menus = menuMapper.findByPermissions(permissions);
         return buildTree(menus, null);
-    }
-
-    private List<String> buildAllowedRoles(String role) {
-        List<String> roles = new ArrayList<>(List.of("ALL"));
-        if (role != null) {
-            roles.add("USER");
-            if ("ADMIN".equals(role)) {
-                roles.add("ADMIN");
-            }
-        }
-        return roles;
     }
 
     private List<MenuDto.Response> buildTree(List<Menu> all, Long parentId) {

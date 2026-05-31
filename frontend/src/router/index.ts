@@ -1,6 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import type { Permission } from '@/constants/permissions'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean       // 로그인 필요
+    requiresPermission?: Permission  // 특정 권한 필요
+    requiresGuest?: boolean      // 비로그인 전용
+  }
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -12,6 +21,7 @@ const routes: RouteRecordRaw[] = [
     path: '/auth/callback',
     name: 'auth-callback',
     component: () => import('@/pages/AuthCallbackPage.vue'),
+    meta: { requiresGuest: true },
   },
   {
     path: '/community/notice',
@@ -22,13 +32,13 @@ const routes: RouteRecordRaw[] = [
     path: '/community/notice/write',
     name: 'notice-write',
     component: () => import('@/pages/community/NoticeWritePage.vue'),
-    meta: { requiresAdmin: true },
+    meta: { requiresPermission: 'NOTICE_WRITE' },
   },
   {
     path: '/community/notice/:id/edit',
     name: 'notice-edit',
     component: () => import('@/pages/community/NoticeWritePage.vue'),
-    meta: { requiresAdmin: true },
+    meta: { requiresPermission: 'NOTICE_WRITE' },
   },
   {
     path: '/community/notice/:id',
@@ -39,6 +49,7 @@ const routes: RouteRecordRaw[] = [
     path: '/sample',
     name: 'sample',
     component: () => import('@/pages/sample/SamplePage.vue'),
+    meta: { requiresPermission: 'SAMPLE_ACCESS' },
   },
   {
     path: '/:pathMatch(.*)*',
@@ -52,12 +63,24 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
-  if (to.meta.requiresAdmin) {
-    const authStore = useAuthStore()
-    if (!authStore.isAdmin) {
-      return { name: 'home' }
-    }
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore()
+
+  // 토큰은 있지만 유저 정보가 없으면 먼저 로드 (새로고침 시 권한 확인 위해)
+  if (authStore.isLoggedIn && !authStore.user) {
+    await authStore.fetchUser()
+  }
+
+  if (to.meta.requiresGuest && authStore.isLoggedIn) {
+    return { name: 'home' }
+  }
+
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    return { name: 'home' }
+  }
+
+  if (to.meta.requiresPermission && !authStore.hasPermission(to.meta.requiresPermission)) {
+    return { name: 'home' }
   }
 })
 

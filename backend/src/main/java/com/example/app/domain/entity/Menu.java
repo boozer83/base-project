@@ -15,6 +15,6 @@ public class Menu {
     private String path;
     private Long parentId;
     private int sortOrder;
-    private String roles;
+    private String permission;
     private boolean isActive;
 }
