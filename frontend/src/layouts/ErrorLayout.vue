@@ -1,0 +1,15 @@
+<template>
+  <div class="error-layout">
+    <router-view />
+  </div>
+</template>
+
+<style scoped>
+.error-layout {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f7fa;
+}
+</style>

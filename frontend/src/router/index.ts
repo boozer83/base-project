@@ -40,6 +40,16 @@ const routes: RouteRecordRaw[] = [
     name: 'sample',
     component: () => import('@/pages/sample/SamplePage.vue'),
   },
+  {
+    path: '/error/404',
+    name: 'error-404',
+    component: () => import('@/pages/error/Error404Page.vue'),
+    meta: { layout: 'error' },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/error/404',
+  },
 ]
 
 const router = createRouter({
