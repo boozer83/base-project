@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElNotification } from 'element-plus'
 import { Edit, Delete, Download, Upload, Check, Warning, CircleCloseFilled, InfoFilled, Bell, Star, StarFilled } from '@element-plus/icons-vue'
 import {
@@ -19,6 +19,8 @@ import {
 import type { SelectOption, TableColumn, TimelineItem, TabItem } from '@/components/common'
 import { useSampleStore } from '@/stores/useSampleStore'
 import type { TableRow } from '@/stores/useSampleStore'
+import { fetchTableItems } from '@/services/sampleService'
+import type { TableParams } from '@/services/sampleService'
 
 const store = useSampleStore()
 
@@ -92,13 +94,13 @@ const timelineItems: TimelineItem[] = [
 
 // 테이블
 const tableColumns: TableColumn[] = [
-  { prop: 'index',    label: '#',      type: 'index', width: 50 },
-  { prop: 'name',     label: '이름',   minWidth: 100 },
+  { prop: 'index',    label: '#',        type: 'index', width: 50 },
+  { prop: 'name',     label: '이름',     minWidth: 100 },
   { prop: 'category', label: '카테고리', width: 110, align: 'center' },
-  { prop: 'status',   label: '상태',   width: 90,  align: 'center', slot: true },
-  { prop: 'amount',   label: '금액',   width: 130, align: 'right',  slot: true },
-  { prop: 'date',     label: '등록일', width: 110, align: 'center' },
-  { prop: 'action',   label: '액션',   width: 120, align: 'center', slot: true },
+  { prop: 'status',   label: '상태',     width: 90,  align: 'center', slot: true },
+  { prop: 'amount',   label: '금액',     width: 130, align: 'right',  slot: true },
+  { prop: 'date',     label: '등록일',   width: 110, align: 'center' },
+  { prop: 'action',   label: '액션',     width: 120, align: 'center', slot: true },
 ]
 const statusMap: Record<TableRow['status'], { type: 'success' | 'danger' | 'warning'; label: string }> = {
   active:   { type: 'success', label: '활성' },
@@ -108,6 +110,36 @@ const statusMap: Record<TableRow['status'], { type: 'success' | 'danger' | 'warn
 function formatAmount(val: number) {
   return val.toLocaleString('ko-KR') + '원'
 }
+
+const tableData    = ref<TableRow[]>([])
+const tableTotal   = ref(0)
+const tableParams  = ref<TableParams>({ page: 1, size: 5, query: '' })
+const tableLoading = ref(false)
+
+async function loadTableData() {
+  tableLoading.value = true
+  try {
+    const res = await fetchTableItems(tableParams.value)
+    tableData.value  = res.data
+    tableTotal.value = res.total
+  } finally {
+    tableLoading.value = false
+  }
+}
+
+function onTableSearch(query: string) {
+  tableParams.value = { ...tableParams.value, page: 1, query }
+  loadTableData()
+}
+
+function onTablePageChange(page: number, size: number) {
+  tableParams.value = { ...tableParams.value, page, size }
+  loadTableData()
+}
+
+onMounted(() => {
+  loadTableData()
+})
 
 // 페이지네이션
 const page1 = ref(1)
@@ -356,11 +388,15 @@ function showNotification(type: 'success' | 'warning' | 'error' | 'info') {
       <h3 class="section-title">그리드 (CommonTable)</h3>
       <CommonTable
         :columns="tableColumns"
-        :data="(store.tableData as Record<string, unknown>[])"
+        :data="(tableData as Record<string, unknown>[])"
+        :total="tableTotal"
+        :loading="tableLoading"
         searchable
         :page-sizes="[5, 10, 20]"
         :default-page-size="5"
         search-placeholder="이름 또는 카테고리 검색"
+        @search="onTableSearch"
+        @page-change="onTablePageChange"
       >
         <template #toolbar-right>
           <CommonButton type="primary" :icon="Edit">신규 등록</CommonButton>
