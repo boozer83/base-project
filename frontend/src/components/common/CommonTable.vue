@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 
 export interface TableColumn {
@@ -15,47 +15,56 @@ export interface TableColumn {
 const props = defineProps<{
   columns: TableColumn[]
   data: Record<string, unknown>[]
-  searchFields?: string[]
+  total?: number
+  searchable?: boolean
   pageSizes?: number[]
   defaultPageSize?: number
   searchPlaceholder?: string
+}>()
+
+const emit = defineEmits<{
+  search: [query: string]
+  'page-change': [page: number, size: number]
 }>()
 
 const searchQuery = ref('')
 const currentPage = ref(1)
 const pageSize = ref(props.defaultPageSize ?? 10)
 
-const filteredData = computed(() => {
-  if (!searchQuery.value || !props.searchFields?.length) return props.data
-  const q = searchQuery.value.toLowerCase()
-  return props.data.filter((row) =>
-    props.searchFields!.some((field) =>
-      String(row[field] ?? '').toLowerCase().includes(q),
-    ),
-  )
-})
+let debounceTimer: ReturnType<typeof setTimeout>
+function onSearchInput(val: string) {
+  currentPage.value = 1
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => emit('search', val), 300)
+}
 
-const pagedData = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredData.value.slice(start, start + pageSize.value)
-})
+function onPageChange(page: number) {
+  currentPage.value = page
+  emit('page-change', page, pageSize.value)
+}
+
+function onSizeChange(size: number) {
+  pageSize.value = size
+  currentPage.value = 1
+  emit('page-change', 1, size)
+}
 </script>
 
 <template>
   <div>
-    <div v-if="searchFields?.length" class="toolbar">
+    <div v-if="searchable" class="toolbar">
       <el-input
         v-model="searchQuery"
         :placeholder="searchPlaceholder ?? '검색'"
         :prefix-icon="Search"
         clearable
         style="width: 260px"
-        @input="currentPage = 1"
+        @input="onSearchInput"
       />
       <slot name="toolbar-right" />
     </div>
 
-    <el-table :data="pagedData" stripe border style="width: 100%; margin-top: 12px">
+    <el-table :data="data" stripe border style="width: 100%; margin-top: 12px">
       <template v-for="col in columns" :key="col.prop">
         <el-table-column
           v-if="col.type === 'index'"
@@ -92,9 +101,11 @@ const pagedData = computed(() => {
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="pageSizes ?? [10, 20, 50]"
-        :total="filteredData.length"
+        :total="total ?? data.length"
         layout="total, sizes, prev, pager, next"
         background
+        @current-change="onPageChange"
+        @size-change="onSizeChange"
       />
     </div>
   </div>

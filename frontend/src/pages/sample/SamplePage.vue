@@ -357,7 +357,7 @@ function showNotification(type: 'success' | 'warning' | 'error' | 'info') {
       <CommonTable
         :columns="tableColumns"
         :data="(store.tableData as Record<string, unknown>[])"
-        :search-fields="['name', 'category']"
+        searchable
         :page-sizes="[5, 10, 20]"
         :default-page-size="5"
         search-placeholder="이름 또는 카테고리 검색"
